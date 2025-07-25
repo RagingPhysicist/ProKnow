@@ -50,9 +50,8 @@ def process_patient_directories(root_dir: str, output_excel_path: str):
         df = pd.DataFrame(all_patient_data)
 
         column_order = [
-            'PatientID', 'StudyInstanceUID', 'SeriesInstanceUID',
-            'ManufacturersModelName', 'TreatmentSites',
-            'RTStruct_SOPInstanceUID', 'RTDose_SOPInstanceUIDs'
+            'PatientID', 'TreatmentSites', 'ManufacturersModelName', 'StudyInstanceUID', 'SeriesInstanceUID',
+            'RTStruct_SOPInstanceUID', 'RTPlan_SOPINstanceUID', 'RTDose_SOPInstanceUIDs'
         ]
         df = df[column_order]
 
@@ -64,18 +63,18 @@ def process_patient_directories(root_dir: str, output_excel_path: str):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="A toolkit for processing DICOM RT data. It extracts metadata to Excel and performs dose summation."
+        description="A bundle of scripts to try to upload RT data to a ProKnow cloud meanwhile getting relevant info from the dcm files. Relevant info mainly means SOP Instane UIDs from structuresets, plans and dose cubes for later to be able to upload custom metrics in batches."
     )
     parser.add_argument(
         "root_dir",
         type=str,
-        help="The root directory containing patient folders (e.g., S:\\ProKnow)."
+        help="Directory where the folder for processing are stored"
     )
     parser.add_argument(
         "-o", "--output",
         type=str,
-        default="dicom_summary.xlsx",
-        help="Path for the output Excel file. Default: dicom_summary.xlsx"
+        default="Summary.xlsx",
+        help="Path to the sumary excel file"
     )
 
     args = parser.parse_args()

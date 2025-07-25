@@ -34,6 +34,7 @@ def extract_dicom_info(patient_dir: str) -> Tuple[dict, list]:  # <-- CHANGE THI
         'ManufacturersModelName': 'N/A',
         'TreatmentSites': 'N/A',
         'RTStruct_SOPInstanceUID': 'N/A',
+        'RTPlan_SOPInstanceUID' : 'N/A',
         'RTDose_SOPInstanceUIDs': 'N/A',
     }
 
@@ -44,8 +45,8 @@ def extract_dicom_info(patient_dir: str) -> Tuple[dict, list]:  # <-- CHANGE THI
             data['StudyInstanceUID'] = plan_dcm.get("StudyInstanceUID", "N/A")
             data['SeriesInstanceUID'] = plan_dcm.get("SeriesInstanceUID", "N/A")
             data['ManufacturersModelName'] = plan_dcm.get("ManufacturerModelName", "N/A")
-
             data['TreatmentSites'] = plan_dcm.get("TreatmentSites", "N/A")
+            data['RTPlan_SOPInstanceUID'] = plan_dcm.get("SOPInstanceUID", "N/A")
 
         except Exception as e:
             print(f"  -> Error processing RTPlan for {patient_id}: {e}")
