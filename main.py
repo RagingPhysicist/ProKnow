@@ -51,7 +51,7 @@ def process_patient_directories(root_dir: str, output_excel_path: str):
 
         column_order = [
             'PatientID', 'TreatmentSites', 'ManufacturersModelName', 'StudyInstanceUID', 'SeriesInstanceUID',
-            'RTStruct_SOPInstanceUID', 'RTPlan_SOPINstanceUID', 'RTDose_SOPInstanceUIDs'
+            'RTStruct_SOPInstanceUID', 'RTPlan_SOPInstanceUID', 'RTDose_SOPInstanceUIDs'
         ]
         df = df[column_order]
 
