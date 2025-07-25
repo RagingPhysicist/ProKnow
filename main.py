@@ -1,4 +1,5 @@
 # main.py
+# runs a couple of scripts with specific parameters to get data out of dcm files and if necessary sum doses
 
 import os
 import argparse

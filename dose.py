@@ -1,4 +1,5 @@
 # dose_summation.py
+# sum sequential dose cubes of a treatment course for further use in proknow
 
 import os
 import numpy as np
@@ -9,7 +10,6 @@ from copy import deepcopy
 
 
 def load_dose_grid(filepath):
-    """Load and scale RTDOSE pixel array from a pydicom Dataset."""
     ds = pydicom.dcmread(filepath)
     if not isinstance(ds, pydicom.dataset.FileDataset):
         raise TypeError(f"Expected a pydicom.dataset.FileDataset, but got {type(ds)} for {filepath}")
@@ -23,7 +23,6 @@ def load_dose_grid(filepath):
 
 
 def check_same_geometry(datasets):
-    """Ensure all RTDOSE files are geometrically aligned."""
     ref = datasets[0]
     for i, ds in enumerate(datasets[1:], 1):
         if (
@@ -39,12 +38,10 @@ def check_same_geometry(datasets):
 
 
 def sum_doses(dose_arrays):
-    """Voxel-wise sum of multiple dose arrays."""
     return np.sum(dose_arrays, axis=0)
 
 
 def create_new_dose_dataset(reference_ds, summed_dose_array, patient_id):
-    """Generate a new RTDOSE dataset with the summed dose."""
     new_ds = deepcopy(reference_ds)
 
     # Update required UIDs and description
@@ -72,13 +69,6 @@ def create_new_dose_dataset(reference_ds, summed_dose_array, patient_id):
 
 
 def perform_summation(rtdose_files: list, patient_id: str):
-    """
-    Main function to sum a list of provided RTDose files. This is called by main.py.
-
-    Args:
-        rtdose_files (list): A list of full paths to the RTDose files to be summed.
-        patient_id (str): The ID of the patient for naming the output file.
-    """
     if len(rtdose_files) <= 1:
         # This check is technically redundant as main.py already does it, but it's good practice.
         return

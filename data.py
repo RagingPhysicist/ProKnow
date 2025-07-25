@@ -1,13 +1,13 @@
 # data_retriever.py
+# process dcm struct, plan and dose files for infos that might be relevant later in ProKnow
 
 import os
 import pydicom
 from pydicom.errors import InvalidDicomError
-from typing import Tuple, Dict, List  # <-- ADD THIS IMPORT
+from typing import Tuple, Dict, List
 
 
 def get_all_dicom_files(patient_dir: str) -> Dict[str, List[str]]:
-    """Recursively finds all RTPlan, RTStruct, and RTDose files within a patient directory."""
     files = {'RTPLAN': [], 'RTSTRUCT': [], 'RTDOSE': []}
     for root, _, filenames in os.walk(patient_dir):
         for filename in filenames:
@@ -23,7 +23,6 @@ def get_all_dicom_files(patient_dir: str) -> Dict[str, List[str]]:
 
 
 def extract_dicom_info(patient_dir: str) -> Tuple[dict, list]:  # <-- CHANGE THIS LINE
-    """Extracts specified UIDs and other info from DICOM files for one patient."""
     dicom_files = get_all_dicom_files(patient_dir)
     patient_id = os.path.basename(os.path.normpath(patient_dir))
 
