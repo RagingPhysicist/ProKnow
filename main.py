@@ -1,28 +1,25 @@
 # main.py
-# runs a couple of scripts with specific parameters to get data out of dcm files and if necessary sum doses
 
 import os
 import argparse
 import pandas as pd
 from tqdm import tqdm
 
-# Import our custom modules
 from dose import perform_summation
 from data import extract_dicom_info
+from dicom_send import send_patient_files  # <-- IMPORT THE NEW FUNCTION
 
 
-def process_patient_directories(root_dir: str, output_excel_path: str):
-    """
-    Main function to orchestrate DICOM processing tasks.
-    """
+def process_patient_directories(args):
+    """Main function to orchestrate DICOM processing tasks."""
     try:
-        patient_dirs = [d.path for d in os.scandir(root_dir) if d.is_dir()]
+        patient_dirs = [d.path for d in os.scandir(args.root_dir) if d.is_dir()]
     except FileNotFoundError:
-        print(f"Error: Root directory not found at '{root_dir}'")
+        print(f"Error: Root directory not found at '{args.root_dir}'")
         return
 
     if not patient_dirs:
-        print(f"No patient directories found in '{root_dir}'.")
+        print(f"No patient directories found in '{args.root_dir}'.")
         return
 
     print(f"Found {len(patient_dirs)} patient directories. Starting processing...")
@@ -33,51 +30,50 @@ def process_patient_directories(root_dir: str, output_excel_path: str):
         patient_id = os.path.basename(patient_dir)
         tqdm.write(f"\n--- Processing Patient: {patient_id} ---")
 
-        # 1. Extract DICOM information and get a list of RTDose files
-        patient_data, rtdose_files = extract_dicom_info(patient_dir)
+        # 1. Get metadata, the list of ALL dicom files, and the list of RTDose files
+        patient_data, all_files, rtdose_files = extract_dicom_info(patient_dir)
         all_patient_data.append(patient_data)
 
-        # 2. Perform dose summation if more than one RTDose file is found
+        # 2. Perform dose summation if applicable
         if len(rtdose_files) > 1:
-            # Pass the list of files and the patient ID to the summation script
-            perform_summation(rtdose_files, patient_id)
-        else:
-            tqdm.write(" -> Skipping summation: Single or no RTDose file found.")
+            summed_dose_path = perform_summation(rtdose_files, patient_id)
+            # If a new file was created, add it to the list of files to be sent
+            if summed_dose_path:
+                all_files.append(summed_dose_path)
 
-    # 3. Save all collected data to an Excel spreadsheet
-    if all_patient_data:
-        print("\n-------------------------------------------------")
-        print(f"Saving extracted data to {output_excel_path}...")
-        df = pd.DataFrame(all_patient_data)
-
-        column_order = [
-            'PatientID', 'TreatmentSites', 'ManufacturersModelName', 'StudyInstanceUID', 'SeriesInstanceUID',
-            'RTStruct_SOPInstanceUID', 'RTPlan_SOPInstanceUID', 'RTDose_SOPInstanceUIDs'
-        ]
-        df = df[column_order]
-
-        df.to_excel(output_excel_path, index=False, engine='openpyxl')
-        print(f" Processing complete. Report saved to {output_excel_path}")
-    else:
-        print("No data was extracted.")
+        # 3. If the send flag is set, send ALL collected files
+        if args.send:
+            send_patient_files(
+                file_list=all_files,
+                dest_ip=args.dest_ip,
+                dest_port=args.dest_port,
+                dest_aet=args.dest_aet,
+                calling_aet=args.calling_aet
+            )
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="A bundle of scripts to try to upload RT data to a ProKnow cloud meanwhile getting relevant info from the dcm files. Relevant info mainly means SOP Instane UIDs from structuresets, plans and dose cubes for later to be able to upload custom metrics in batches."
+        description="A toolkit for processing DICOM RT data. It extracts metadata and performs dose summation and sending."
     )
-    parser.add_argument(
-        "root_dir",
-        type=str,
-        help="Directory where the folder for processing are stored"
-    )
-    parser.add_argument(
-        "-o", "--output",
-        type=str,
-        default="Summary.xlsx",
-        help="Path to the sumary excel file"
-    )
+    # Existing arguments
+    parser.add_argument("root_dir", type=str, help="The root directory containing patient folders.")
+    parser.add_argument("-o", "--output", type=str, default="dicom_summary.xlsx",
+                        help="Path for the output Excel file.")
+
+    # Arguments for DICOM sending
+    parser.add_argument("--send", action="store_true",
+                        help="Flag to enable sending of new summed dose files to a DICOM destination.")
+    parser.add_argument("--dest-ip", type=str, help="Destination IP address.")
+    parser.add_argument("--dest-port", type=int, help="Destination port number.")
+    parser.add_argument("--dest-aet", type=str, help="Destination Application Entity Title (AET).")
+    parser.add_argument("--calling-aet", type=str, default="PY_SENDER", help="This script's AET. Default: PY_SENDER")
 
     args = parser.parse_args()
 
-    process_patient_directories(args.root_dir, args.output)
+    # Check if sending is enabled and all required arguments are provided
+    if args.send and not all([args.dest_ip, args.dest_port, args.dest_aet]):
+        parser.error("--send requires --dest-ip, --dest-port, and --dest-aet to be set.")
+
+    # This is the corrected function call
+    process_patient_directories(args)

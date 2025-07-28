@@ -114,3 +114,4 @@ def perform_summation(rtdose_files: list, patient_id: str):
 
     except Exception as e:
         print(f"  -> ERROR: Failed to sum doses for patient {patient_id}: {e}")
+        return None
