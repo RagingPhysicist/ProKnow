@@ -46,7 +46,7 @@ def send_patient_files(file_list: list, dest_ip: str, dest_port: int, dest_aet: 
     assoc = ae.associate(dest_ip, dest_port, ae_title=dest_aet)
 
     if assoc.is_established:
-        print(" ✅ Association successful.")
+        print("Association successful.")
 
         for filepath in tqdm(file_list, desc="Sending Files", unit="file", leave=False):
             try:
@@ -54,12 +54,12 @@ def send_patient_files(file_list: list, dest_ip: str, dest_port: int, dest_aet: 
                 status = assoc.send_c_store(dataset)
 
                 if status and status.Status != 0x0000:
-                    tqdm.write(f" ❌ Failed to send {os.path.basename(filepath)}. Status: 0x{status.Status:04x}")
+                    tqdm.write(f"Failed to send {os.path.basename(filepath)}. Status: 0x{status.Status:04x}")
 
             except Exception as e:
-                tqdm.write(f" ❌ Could not read or send {filepath}: {e}")
+                tqdm.write(f"Could not read or send {filepath}: {e}")
 
         assoc.release()
         print(" -> Send process complete. Association released.")
     else:
-        print(" ❌ Association with the destination failed. Please check IP, port, and AET.")
+        print("Association with the destination failed. Please check IP, port, and AET.")
